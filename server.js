@@ -54,6 +54,17 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// ── Debug: list ALL resources in Cloudinary ──
+app.get('/api/debug/all', async (req, res) => {
+  if (!useCloud) return res.json({ error: 'Cloud not enabled' });
+  try {
+    const result = await cloudinary.api.resources({ type: 'upload', max_results: 100 });
+    res.json(result.resources.map(r => ({ public_id: r.public_id, url: r.secure_url })));
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});
+
 // ── GET all folders ──
 app.get('/api/folders', async (req, res) => {
   if (useCloud) {
