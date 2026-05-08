@@ -54,20 +54,23 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// ── Debug: list ALL resources in Cloudinary ──
-app.get('/api/debug/all', async (req, res) => {
+// ── Debug: ping Cloudinary ──
+app.get('/api/debug/ping', (req, res) => {
+  res.json({ ok: true, useCloud, time: new Date().toISOString() });
+});
+
+app.get('/api/debug/cloudinary', (req, res) => {
   if (!useCloud) return res.json({ error: 'Cloud not enabled' });
-  try {
-    const result = await cloudinary.api.resources({ type: 'upload', max_results: 100 });
-    const resources = Array.isArray(result.resources) ? result.resources : [];
-    res.json({
-      total: resources.length,
-      raw_result_keys: Object.keys(result),
-      items: resources.map(r => ({ public_id: r.public_id, url: r.secure_url }))
-    });
-  } catch (e) {
-    res.json({ error: e.message, stack: e.stack });
-  }
+  cloudinary.api.ping()
+    .then(r => res.json({ ping: r, ok: true }))
+    .catch(e => res.json({ error: e.message }));
+});
+
+app.get('/api/debug/resources', (req, res) => {
+  if (!useCloud) return res.json({ error: 'Cloud not enabled' });
+  cloudinary.api.resources({ type: 'upload', max_results: 10 })
+    .then(r => res.json({ count: r.resources ? r.resources.length : 0, resources: r.resources || [] }))
+    .catch(e => res.json({ error: e.message }));
 });
 
 // ── GET all folders ──
