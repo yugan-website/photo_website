@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yugan - Admin</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="logo">📸 Yugan</div>
+    <nav>
+      <a href="index.html">Gallery</a>
+      <a href="admin.html" class="active">Admin</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Admin Panel</h1>
+
+    <!-- CREATE FOLDER -->
+    <section class="admin-section">
+      <h2>Create New Album</h2>
+      <div class="row">
+        <input type="text" id="folderName" placeholder="Album name (e.g. Family 2024)" />
+        <button onclick="createFolder()">+ Create Album</button>
+      </div>
+    </section>
+
+    <!-- UPLOAD PHOTOS -->
+    <section class="admin-section">
+      <h2>Upload Photos</h2>
+      <div class="row">
+        <select id="targetFolder">
+          <option value="">-- Select Album --</option>
+        </select>
+        <label class="file-label">
+          Choose Photos
+          <input type="file" id="photoFiles" multiple accept="image/*" onchange="updateFileCount()" />
+        </label>
+        <span id="fileCount">No files selected</span>
+        <button onclick="uploadPhotos()">Upload</button>
+      </div>
+      <div id="uploadProgress" class="hidden progress-bar"><div id="progressFill"></div></div>
+      <p id="uploadMsg"></p>
+    </section>
+
+    <!-- MANAGE ALBUMS -->
+    <section class="admin-section">
+      <h2>Manage Albums</h2>
+      <div id="adminFolderList"></div>
+    </section>
+  </main>
+
+  <script>
+    async function loadFolders() {
+      const res = await fetch('/api/folders');
+      const folders = await res.json();
+
+      const select = document.getElementById('targetFolder');
+      const current = select.value;
+      select.innerHTML = '<option value="">-- Select Album --</option>';
+      folders.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (f === current) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const list = document.getElementById('adminFolderList');
+      list.innerHTML = '';
+      if (folders.length === 0) {
+        list.innerHTML = '<p class="empty">No albums yet.</p>';
+        return;
+      }
+      for (const folder of folders) {
+        const photos = await fetch(`/api/folders/${encodeURIComponent(folder)}/photos`).then(r => r.json());
+        const row = document.createElement('div');
+        row.className = 'admin-folder-row';
+        row.innerHTML = `
+          <span>📁 <strong>${folder}</strong> — ${photos.length} photo${photos.length !== 1 ? 's' : ''}</span>
+          <button class="danger" onclick="deleteFolder('${folder}')">Delete Album</button>`;
+        list.appendChild(row);
+
+        if (photos.length > 0) {
+          const thumbs = document.createElement('div');
+          thumbs.className = 'admin-thumbs';
+          photos.forEach(photo => {
+            const wrap = document.createElement('div');
+            wrap.className = 'admin-thumb';
+            wrap.innerHTML = `
+              <img src="/uploads/${encodeURIComponent(folder)}/${encodeURIComponent(photo)}" />
+              <button class="del-photo" onclick="deletePhoto('${folder}','${photo}')">✕</button>`;
+            thumbs.appendChild(wrap);
+          });
+          list.appendChild(thumbs);
+        }
+      }
+    }
+
+    async function createFolder() {
+      const name = document.getElementById('folderName').value.trim();
+      if (!name) return alert('Please enter an album name.');
+      await fetch('/api/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      document.getElementById('folderName').value = '';
+      loadFolders();
+    }
+
+    function updateFileCount() {
+      const files = document.getElementById('photoFiles').files;
+      document.getElementById('fileCount').textContent = files.length ? `${files.length} file(s) selected` : 'No files selected';
+    }
+
+    async function uploadPhotos() {
+      const folder = document.getElementById('targetFolder').value;
+      const files = document.getElementById('photoFiles').files;
+      if (!folder) return alert('Please select an album first.');
+      if (!files.length) return alert('Please choose photos to upload.');
+
+      const form = new FormData();
+      for (const f of files) form.append('photos', f);
+
+      document.getElementById('uploadProgress').classList.remove('hidden');
+      document.getElementById('progressFill').style.width = '0%';
+      document.getElementById('uploadMsg').textContent = '';
+
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = e => {
+        if (e.lengthComputable) {
+          document.getElementById('progressFill').style.width = Math.round(e.loaded / e.total * 100) + '%';
+        }
+      };
+      xhr.onload = () => {
+        document.getElementById('uploadMsg').textContent = `✅ Uploaded ${files.length} photo(s) successfully!`;
+        document.getElementById('photoFiles').value = '';
+        document.getElementById('fileCount').textContent = 'No files selected';
+        loadFolders();
+      };
+      xhr.open('POST', `/api/folders/${encodeURIComponent(folder)}/photos`);
+      xhr.send(form);
+    }
+
+    async function deleteFolder(folder) {
+      if (!confirm(`Delete album "${folder}" and ALL its photos?`)) return;
+      await fetch(`/api/folders/${encodeURIComponent(folder)}`, { method: 'DELETE' });
+      loadFolders();
+    }
+
+    async function deletePhoto(folder, photo) {
+      if (!confirm(`Delete photo "${photo}"?`)) return;
+      await fetch(`/api/folders/${encodeURIComponent(folder)}/photos/${encodeURIComponent(photo)}`, { method: 'DELETE' });
+      loadFolders();
+    }
+
+    loadFolders();
+  </script>
+</body>
+</html>

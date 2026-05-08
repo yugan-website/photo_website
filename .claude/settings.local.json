@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Sleep -Seconds 2; try { $r = Invoke-WebRequest -Uri \"http://localhost:3000\" -UseBasicParsing -TimeoutSec 5; \"Status: $\\($r.StatusCode\\)\" } catch { \"Error: $_\" })",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:3000/api/qrcode\" -UseBasicParsing; $data = $r.Content | ConvertFrom-Json; \"QR URL: $\\($data.url\\)\"; \"QR Image length: $\\($data.qr.Length\\) chars\")",
+      "PowerShell(npm *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(winget install *)"
+    ]
+  }
+}
