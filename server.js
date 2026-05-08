@@ -59,9 +59,14 @@ app.get('/api/debug/all', async (req, res) => {
   if (!useCloud) return res.json({ error: 'Cloud not enabled' });
   try {
     const result = await cloudinary.api.resources({ type: 'upload', max_results: 100 });
-    res.json(result.resources.map(r => ({ public_id: r.public_id, url: r.secure_url })));
+    const resources = Array.isArray(result.resources) ? result.resources : [];
+    res.json({
+      total: resources.length,
+      raw_result_keys: Object.keys(result),
+      items: resources.map(r => ({ public_id: r.public_id, url: r.secure_url }))
+    });
   } catch (e) {
-    res.json({ error: e.message });
+    res.json({ error: e.message, stack: e.stack });
   }
 });
 
