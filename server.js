@@ -46,7 +46,7 @@ async function loadMeta() {
   }
   if (useCloud) {
     try {
-      const url = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${META_PUBLIC_ID}.json`;
+      const url = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/raw/upload/${META_PUBLIC_ID}`;
       const body = await httpsGet(url + '?_=' + Date.now());
       const data = JSON.parse(body);
       fs.writeFileSync(META_LOCAL, JSON.stringify(data));
