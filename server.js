@@ -63,14 +63,14 @@ app.get('/api/debug/cloudinary', (req, res) => {
   if (!useCloud) return res.json({ error: 'Cloud not enabled' });
   cloudinary.api.ping()
     .then(r => res.json({ ping: r, ok: true }))
-    .catch(e => res.json({ error: e.message }));
+    .catch(e => res.json({ raw: String(e), http_code: e && e.http_code, msg: e && e.message, detail: e && e.error }));
 });
 
 app.get('/api/debug/resources', (req, res) => {
   if (!useCloud) return res.json({ error: 'Cloud not enabled' });
   cloudinary.api.resources({ type: 'upload', max_results: 10 })
     .then(r => res.json({ count: r.resources ? r.resources.length : 0, resources: r.resources || [] }))
-    .catch(e => res.json({ error: e.message }));
+    .catch(e => res.json({ raw: String(e), http_code: e && e.http_code, msg: e && e.message, detail: e && e.error }));
 });
 
 // ── GET all folders ──
