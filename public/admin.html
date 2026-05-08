@@ -140,10 +140,23 @@
         }
       };
       xhr.onload = () => {
-        document.getElementById('uploadMsg').textContent = `✅ Uploaded ${files.length} photo(s) successfully!`;
-        document.getElementById('photoFiles').value = '';
-        document.getElementById('fileCount').textContent = 'No files selected';
-        loadFolders();
+        try {
+          const resp = JSON.parse(xhr.responseText);
+          if (xhr.status === 200 && resp.uploaded) {
+            document.getElementById('uploadMsg').textContent = `✅ Uploaded ${resp.uploaded} photo(s) successfully!`;
+            document.getElementById('photoFiles').value = '';
+            document.getElementById('fileCount').textContent = 'No files selected';
+            loadFolders();
+          } else {
+            document.getElementById('uploadMsg').style.color = '#e94560';
+            document.getElementById('uploadMsg').textContent = `❌ Upload error: ${resp.error || xhr.responseText}`;
+          }
+        } catch(e) {
+          document.getElementById('uploadMsg').textContent = `❌ Unexpected error: ${xhr.responseText}`;
+        }
+      };
+      xhr.onerror = () => {
+        document.getElementById('uploadMsg').textContent = '❌ Network error during upload.';
       };
       xhr.open('POST', `/api/folders/${encodeURIComponent(folder)}/photos`);
       xhr.send(form);

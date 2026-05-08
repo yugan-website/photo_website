@@ -8,7 +8,8 @@
       "PowerShell(winget install *)",
       "PowerShell(Start-Sleep -Seconds 20; Get-Content \"C:\\\\Users\\\\mouni\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-mouni-my-first-project\\\\69c6eb8d-db5e-43c0-848c-6c669a30c6ed\\\\tasks\\\\bg73wp04s.output\" -ErrorAction SilentlyContinue; \"---DONE---\")",
       "PowerShell(Invoke-WebRequest \"http://localhost:3000/api/folders\" -UseBasicParsing)",
-      "PowerShell(Invoke-WebRequest \"http://localhost:3000/api/debug/meta\" -UseBasicParsing)"
+      "PowerShell(Invoke-WebRequest \"http://localhost:3000/api/debug/meta\" -UseBasicParsing)",
+      "PowerShell(\\(Invoke-WebRequest \"https://photowebsite-production.up.railway.app/api/debug/meta\" -UseBasicParsing -TimeoutSec 15\\).Content)"
     ]
   }
 }

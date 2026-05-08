@@ -157,7 +157,10 @@ app.post('/api/folders/:folder/photos', async (req, res) => {
         if (!meta.folders.includes(folder)) meta.folders.push(folder);
         if (!meta.photos[folder]) meta.photos[folder] = [];
         for (const file of req.files) {
-          meta.photos[folder].push({ url: file.path, public_id: file.filename });
+          const url = file.secure_url || file.path || (file.cloudinary && file.cloudinary.secure_url);
+          const pid = file.public_id || file.filename;
+          if (!url) return res.status(500).json({ error: 'No URL from Cloudinary. File keys: ' + Object.keys(file).join(',') });
+          meta.photos[folder].push({ url, public_id: pid });
         }
         await saveMeta(meta);
         return res.json({ uploaded: req.files.length });
