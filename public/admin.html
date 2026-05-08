@@ -90,9 +90,12 @@
           photos.forEach(photo => {
             const wrap = document.createElement('div');
             wrap.className = 'admin-thumb';
+            const src = (photo && photo.url) ? photo.url : `/uploads/${encodeURIComponent(folder)}/${encodeURIComponent(photo)}`;
+            const pid = (photo && photo.public_id) ? photo.public_id : photo;
+            const fname = (photo && photo.public_id) ? '' : photo;
             wrap.innerHTML = `
-              <img src="/uploads/${encodeURIComponent(folder)}/${encodeURIComponent(photo)}" />
-              <button class="del-photo" onclick="deletePhoto('${folder}','${photo}')">✕</button>`;
+              <img src="${src}" />
+              <button class="del-photo" onclick="deletePhoto('${folder}','${encodeURIComponent(pid)}','${encodeURIComponent(fname)}')">✕</button>`;
             thumbs.appendChild(wrap);
           });
           list.appendChild(thumbs);
@@ -152,9 +155,9 @@
       loadFolders();
     }
 
-    async function deletePhoto(folder, photo) {
-      if (!confirm(`Delete photo "${photo}"?`)) return;
-      await fetch(`/api/folders/${encodeURIComponent(folder)}/photos/${encodeURIComponent(photo)}`, { method: 'DELETE' });
+    async function deletePhoto(folder, publicId, filename) {
+      if (!confirm('Delete this photo?')) return;
+      await fetch(`/api/folders/${encodeURIComponent(folder)}/photos?public_id=${publicId}&filename=${filename}`, { method: 'DELETE' });
       loadFolders();
     }
 
