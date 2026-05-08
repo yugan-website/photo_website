@@ -45,13 +45,33 @@ function makeUpload(folder) {
   return multer({ storage });
 }
 
+// ── Status check ──
+app.get('/api/status', (req, res) => {
+  res.json({
+    useCloud,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'not set',
+    hasKey: !!process.env.CLOUDINARY_API_KEY,
+  });
+});
+
 // ── GET all folders ──
 app.get('/api/folders', async (req, res) => {
   if (useCloud) {
     try {
-      const result = await cloudinary.api.sub_folders('yugan');
-      return res.json(result.folders.map(f => f.name));
-    } catch {
+      // List all resources under yugan/ and extract unique folder names
+      const result = await cloudinary.api.resources({
+        type: 'upload',
+        prefix: 'yugan/',
+        max_results: 500,
+      });
+      const folders = [...new Set(
+        result.resources
+          .map(r => r.public_id.split('/')[1])
+          .filter(Boolean)
+      )];
+      return res.json(folders);
+    } catch (e) {
+      console.error('Cloudinary folders error:', e.message);
       return res.json([]);
     }
   }
