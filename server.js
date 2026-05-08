@@ -152,13 +152,18 @@ app.post('/api/folders/:folder/photos', async (req, res) => {
   upload.array('photos')(req, res, async (err) => {
     if (err) return res.status(500).json({ error: err.message });
     if (useCloud) {
-      const meta = await loadMeta();
-      if (!meta.folders.includes(folder)) meta.folders.push(folder);
-      if (!meta.photos[folder]) meta.photos[folder] = [];
-      for (const file of req.files) {
-        meta.photos[folder].push({ url: file.path, public_id: file.filename });
+      try {
+        const meta = await loadMeta();
+        if (!meta.folders.includes(folder)) meta.folders.push(folder);
+        if (!meta.photos[folder]) meta.photos[folder] = [];
+        for (const file of req.files) {
+          meta.photos[folder].push({ url: file.path, public_id: file.filename });
+        }
+        await saveMeta(meta);
+        return res.json({ uploaded: req.files.length });
+      } catch (e) {
+        return res.status(500).json({ error: 'Meta save failed: ' + e.message });
       }
-      await saveMeta(meta);
     }
     res.json({ uploaded: req.files.length });
   });
@@ -190,6 +195,14 @@ app.get('/api/qrcode', async (req, res) => {
 // ── Status ──
 app.get('/api/status', (req, res) => {
   res.json({ useCloud, cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'not set', metaExists: fs.existsSync(META_LOCAL) });
+});
+
+// ── Debug: dump raw metadata ──
+app.get('/api/debug/meta', (req, res) => {
+  if (fs.existsSync(META_LOCAL)) {
+    try { return res.json(JSON.parse(fs.readFileSync(META_LOCAL, 'utf8'))); } catch (e) { return res.json({ error: e.message }); }
+  }
+  res.json({ error: 'No metadata file found' });
 });
 
 app.listen(PORT, () => console.log(`Yugan running at http://localhost:${PORT}`));
